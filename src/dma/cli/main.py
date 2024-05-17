@@ -271,3 +271,88 @@ def readiness_check(
         asyncio.run(collector_tasks.readiness_check(console, db_type, username, password, hostname, port, database))
     else:
         console.rule("Skipping execution until input is confirmed", align="left")
+
+@app.command(
+    name="connectivity-check",
+    no_args_is_help=True,
+    short_help="Execute the connectivity check from the target instance.",
+)
+@click.option(
+    "--test-id",
+    "-test",
+    help="Name of the connectivity test",
+    type=click.STRING,
+    default=None,
+    required=False,
+    show_default=False,
+)
+@click.option(
+    "--gcp-project",
+    "-project",
+    help="Name of the GCP project in which the connectivity test should be created",
+    default=None,
+    type=click.STRING,
+    required=False,
+    show_default=False,
+)
+@click.option(
+    "--target-db-ip",
+    help="IP address of the target DB instance to which data is migrated",
+    default=None,
+    type=click.STRING,
+    required=False,
+    show_default=False,
+)
+@click.option(
+    "--source-db-ip",
+    help="IP address of the source DB instance from which data is migrated",
+    default=None,
+    type=click.STRING,
+    required=False,
+    show_default=False,
+)
+@click.option(
+    "--source-db-port",
+    help="port on which Source DB instance listens to",
+    default=None,
+    type=int,
+    required=False,
+    show_default=False,
+)
+@click.option(
+    "--operation-type",
+    help="operation type for the connectivity test. one of create/rerun/delete",
+    default="create",
+    type=click.STRING,
+    required=False,
+    show_default=True,
+)
+def connectivity_check(
+    operation_type: Literal["create", "rerun", "delete"],
+    test_id: str | None = None,
+    gcp_project: str | None = None,
+    target_db_ip: str | None = None,
+    source_db_ip: str | None = None,
+    source_db_port: int | None = None,
+) -> None:
+    from dma.connectivity import tasks as connectivity_tasks
+
+    table = Table(show_header=False)
+    table.add_column("title", style="cyan", width=80)
+    table.add_row("Database Connectivity Assessment")
+    console.print(table)
+    console.rule("Starting connectivity check", align="left")
+    if test_id is None:
+        test_id = prompt.Prompt.ask("Please enter a name for the connectivity test resource")
+    if operation_type is None:
+        operation_type = prompt.Prompt.ask("Please provide the operation type. one of create/rerun/delete")
+    if gcp_project is None:
+        gcp_project = prompt.IntPrompt.ask("Please enter a GCP project name in which the connectivity test will be created")
+    if target_db_ip is None:
+        target_db_ip = prompt.Prompt.ask("Please enter a target/destination database ip used for the migration")
+    if source_db_ip is None:
+        source_db_ip = prompt.Prompt.ask("Please enter the source database ip from which the data is migrated")
+    if source_db_port is None:
+        source_db_port = prompt.Prompt.ask("Please enter the source db port name")
+
+    asyncio.run(connectivity_tasks.connectivity_check(console, operation_type,test_id, gcp_project, target_db_ip, source_db_ip, source_db_port))

@@ -49,6 +49,7 @@ dependencies = [
     "typing-extensions>=4.0.0",
     "msgspec",
     "greenlet; sys_platform == \"darwin\"",
+    "google-cloud-network-management",
 ]
 
 [project.urls]
